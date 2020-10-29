@@ -1,6 +1,28 @@
 # Resilience
-## Definitions
-### Primitives
+
+## Table of Contents
+- [Definitions](#def)
+    -	[Primitives](#pri)
+    -	[Quality Attributes](#qua)
+    -	[Compound Quality Attributes](#com)
+    -	[Expect the unexpected](#exp)
+-	[Taxonomy](#tax)
+-	[Basic mechanisms](#bas)
+    -	[Fail Fast](#fai)
+    -	[Escalation](#esc)
+    -	[Fallback](#fal)
+    -	[Retry](#ret)
+    -	[Circuit Breaker](#cir)
+    -	[Throttling](#thr)
+    -	[Bulkhead](#bul)
+    -	[Load Shedding](#loa)
+    -	[Back Pressure](#bac)
+    -	[Timeout](#tim)
+-	[Not covered](#not)
+
+
+## Definitions <a name="def"></a>
+### Primitives <a name="pri"></a>
 First let’s define the primitives. They are also known as threats.  
 -	**Error**: Incorrect result (a.k.a Mistake)  
 -	**Fault**: Incorrect state/code (a.k.a. Defect)  
@@ -11,7 +33,7 @@ So, an Error can cause a Fault which might end up in a Failure.
 Why do we care about these?  
  *„Everything fails all the time”* - Werner Vogels
 
-### Quality Attributes
+### Quality Attributes <a name="qua"></a>
 Now we know the basics, let’s see what sort of concepts can we derive from them.   
 -	**Availability**: Probability of a system to operate in a given uptime  
 -	**Durability**: Ability of a system to operate for a given (long) period without interruption  
@@ -21,7 +43,7 @@ Now we know the basics, let’s see what sort of concepts can we derive from the
 
 As you can see the whole spectrum / process is covered: from healthy operation through undesired failures till full / partial recovery.
 
-### Compound Quality Attributes
+### Compound Quality Attributes <a name="com"></a>
 Whenever we talk about things, like reliable systems, then we actually think about a group of attributes.  
 - 	**Reliability**: Ability to operate all the time  
     -	This is the desired outcome  
@@ -29,7 +51,7 @@ Whenever we talk about things, like reliable systems, then we actually think abo
     - 	Whatever happens it sends a response to the requester  
 -	**Resilience**: Ability to respond for environment changes  
     -	Withstand certain types of failure and remain functional 
-### Expect the unexpected  
+### Expect the unexpected  <a name="exp"></a>
 When the system has to face with unexpected behaviours we can distinguish several strategies.  
 - 	**Fault Tolerance**: Ability to survive misbehaving environment  
 -	**Fault Resilience**: Ability to recover from misbehaving   environment
@@ -38,7 +60,7 @@ When the system has to face with unexpected behaviours we can distinguish severa
 *“It not about how to make money.
 It is all about how not to lose.”* - Uwe Friedrichsen
 
-## Taxonomy
+## Taxonomy <a name="tax"></a>
 It is really hard to categorize mechanisms, because each classification is done by using a single aspect. For example:
 -	How is it triggered? 
      -	Proactively or Reactively
@@ -61,8 +83,9 @@ Here is a pretty awesome infographic about the different resilience strategies (
 TODO: Add image here
 
 The best thing about these strategies is that they are composable. In other words, your strategy can be combined by using some of these. If an inner mechanism does not provide sufficient solution then it can propagate the problem to the outer one. With this escalation you can create a really robust & resilient solution. In the next section we will explore a handful of well-known mechanisms. These are wide-spread and battle-hardened solutions. 
-## Basic mechanisms
-### Fail Fast
+
+## Basic mechanisms <a name="bas"></a>
+### Fail Fast <a name="fai"></a>
 **Categories**: proactive, before the fact  
 > Please bear in mind that fail fast is not equivalent with fail safe! The later one is not a robust solution because it [conceals the defect](https://javapapers.com/core-java/fail-fast-vs-fail-safe/).
 
@@ -72,7 +95,8 @@ Have you heard the following wisdom: *“Bring the pain forward“*? It is a wel
 -	A function should check its parameters and if they are not in the desired state then it should early exit
 -	An endpoint should check the requester’s rights and if they are not sufficient then the request must be rejected
 -	A service instance should check its dependencies' availability and if they are not reachable then the load balancer should not direct traffic to this instance
-### Escalation
+
+### Escalation <a name="esc"></a>
 **Categories**: reactive, after the fact
 > *Escalation* and *elevation* are sometimes used [interchangeably](https://en.wikipedia.org/wiki/Privilege_escalation) even though they mean absolutely different things. The synonym for the former is increase where the synonym for the latter is promote. 
 > -	Former increases intensity/extent, which might need to involve others from the hierarchy who have broader rights to solve the problem
@@ -86,7 +110,7 @@ In order to be able to delegate my problem to others there should be some sort o
 -	On a function level, we can rarely find things like hierarchy, except the call stack. There are languages (like golang) where there are [defer statements](https://blog.golang.org/defer-panic-and-recover) and they were designed for clean-up / recovery. (It is a more general concept than the finally block).
 -	On application level there are several concurrency models (like [actor model](https://en.wikipedia.org/wiki/Actor_model), [communicating sequential processes](https://en.wikipedia.org/wiki/Communicating_sequential_processes)) that are heavily relying on [supervision](https://getakka.net/articles/concepts/supervision.html). 
 
-### Fallback
+### Fallback <a name="fal"></a>
 **Categories**: reactive, after the fact
 > Please note that *fallback* and *fail back *are not the same. 
 The former one is more general and it means using a surrogate option. 
@@ -105,7 +129,7 @@ This is the simplest pattern among all. If a given component is unable to proces
 -	On infrastructure level this mechanism is heavily used to provide high availability, for example using replication in order to overcome on a single instance malfunctioning / failure. 
     -	If a given instance is not reachable then we can fall back to the other instance
     
-### Retry
+### Retry <a name="ret"></a>
 **Categories**: reactive, after the fact
 > The relation between retries and attempts: n retries means at most n+1 attempts. The +1 is the initial request, if it fails (for whatever reason) then retry logic kicks in. In other words, the 0th step is executed with 0 delay penalty.
 
@@ -134,7 +158,7 @@ Let’s review them one by one:
 -	**Strategy**: What sort of strategy is used to calculate the delays? Are they the same always? Are they increasing each and every time, like exponentially? etc.
 -	**Jitter**: Should it rely on some sort of randomness to prevent a burst?
 
-### Circuit Breaker
+### Circuit Breaker <a name="cir"></a>
 **Categories**: proactive, before the fact
 > It is hard to categorize the circuit breaker because it is pro- and reactive at the same time. It detects that a given downstream system is malfunctioning (reactive) and it protects the upstream systems from transient errors (proactive).
 
@@ -174,7 +198,7 @@ Alternatively the failure count can be defined as a percentage rather than a con
 
 You can also examine only every nth request, so you can use sampling to reduce the overhead.
 
-### Throttling
+### Throttling <a name="thr"></a>
 **Categories**: proactive, before the fact
 > This pattern is also known as rate limiting.
 
@@ -198,7 +222,8 @@ Throttling is all about limiting the rate of the incoming requests by rejecting 
     -	For example:
         -	**API gateways**: the instances are auto-scaled and the consumer is over-charged
         -	**Databases**: if the provisioned read/write is reached then the previously “saved up” capacity can be burned in order to sustain short bursts 
-### Bulkhead
+
+### Bulkhead <a name="bul"></a>
 **Categories**: proactive, before the fact
 > The name of this pattern comes from the naval ship design. A bulkhead is a dividing wall / barrier between other compartments. For example if a section is damaged then only that compartment is compromised and others remain intact.
 
@@ -239,7 +264,7 @@ When one of the resource users overuses the shared resource and causes others to
 -	On tenant level we can use this pattern to dedicate more resources for our paid users than to our normal free users
     -	Being able to handle *priority consumers*
 
-### Load Shedding
+### Load Shedding <a name="loa"></a>
 **Categories**: proactive, before the fact
 
 This pattern is all about to prevent the system from overloading. This intent is really similar to the one that was mentioned at throttling. 
@@ -274,7 +299,7 @@ But there is one thing that is worth mentioning. A pretty common pattern is to d
     -	This means that the load balancers can fulfill this role as well and can provide the load shedding capability. 
     -	With this in mind the load balancer has a richer / broader meaning. 
 
-### Back Pressure
+### Back Pressure <a name="bac"></a>
 **Categories**: proactive, before the fact
 
 This pattern can be seen as the provider-side part of the retry or circuit breaker patterns (both are used on the consumer-side).
@@ -322,7 +347,7 @@ If we are talking about the first case then a lot other questions may arise:
 
 Because of these questions some cloud providers (Amazon and Google) have decided that they will not use Back Pressure (in this form). Rather they suggest to their clients to use exponential back-off logic with randomized jitter.
 
-### Timeout
+### Timeout <a name="tim"></a>
 **Categories**: reactive, after the fact
 > Timeout vs Deadline: Deadline should be considered as distributed timeout where there is a chain of downstream systems. For further details please continue reading.
 
@@ -365,7 +390,7 @@ Let’s imagine you are calling a remote service endpoint via HTTP. What can go 
 -	It is mainly used for I/O related calls (database access, remote service call, event publication, etc.)
 -	In case of microservices the suggested way would be to use deadline from the API gateway to the last downstream system 
 
-## Not covered but commonly used patterns
+## Not covered but commonly used patterns <a name="not"></a>
 -	Caching
     -	Memoization
 -	Redundancy
