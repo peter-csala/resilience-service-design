@@ -80,7 +80,7 @@ As you can see the first two are: proactive and before the fact. The second half
 
 Here is a pretty awesome infographic about the different resilience strategies (it uses a slightly different categorization):
  
-TODO: Add image here
+![Taxonomy](https://developers.redhat.com/blog/wp-content/uploads/2017/05/Screen-Shot-2017-04-22-at-23.55.33-768x541.png)
 
 The best thing about these strategies is that they are composable. In other words, your strategy can be combined by using some of these. If an inner mechanism does not provide sufficient solution then it can propagate the problem to the outer one. With this escalation you can create a really robust & resilient solution. In the next section we will explore a handful of well-known mechanisms. These are wide-spread and battle-hardened solutions. 
 
